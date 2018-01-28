@@ -9,6 +9,6 @@ Or directly install :<br />
 \# install /path/to/chroot-extra /usr/bin/<br />
 
 And assume your system is mounted on /mnt, as superuser, do  <br />
-\# chroot-extra/chroot-extra /mnt/
-Or if you had installed on the system, do 
-\# chroot-extra /mnt/
+\# chroot-extra/chroot-extra /mnt/<br />
+Or if you had installed on the system, do <br />
+\# chroot-extra /mnt/<br />
