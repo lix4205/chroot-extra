@@ -5,6 +5,10 @@ Based on <a href="https://git.archlinux.org/arch-install-scripts.git/" title="Ar
 # Usage
 First you have to give execute permission to chroot-extra :<br />
 chmod +x chroot-extra/chroot-extra
+Or directly install :
+# install /path/to/chroot-extra /usr/bin/
 
 And assume your system is mounted on /mnt, as superuser, do  <br />
 \# chroot-extra/chroot-extra /mnt/
+Or if you had installed on the system, do 
+\# chroot-extra /mnt/
