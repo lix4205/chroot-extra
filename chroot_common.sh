@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# BEGIN Messages
+msg_info() { 
+	local txt saut="\n";
+	[[ "$1" == "-n" ]] && saut="" && shift; 
+	txt="$1"; 
+	shift; 
+	printf " $(date +%H:%M:%S) [ INFO  ] $txt$saut" "$@"; 
+}
+
+msg_error() { 
+	local txt=$1; 
+	shift; 
+	printf " $(date +%H:%M:%S) [ ERROR ] $txt\n" "$@"; 
+}
+
+die() {
+	msg_error "$@" 
+	exit 1
+}
+# END Messages
+
 # BEGIN CHROOT UTILS ( from arch-chroot ) 
 ignore_error() {
   "$@" 2>/dev/null
@@ -7,7 +28,7 @@ ignore_error() {
 }
 
 chroot_add_mount() {
-  $exe mount "$@" && CHROOT_ACTIVE_MOUNTS=("$2" "${CHROOT_ACTIVE_MOUNTS[@]}")
+  mount "$@" && CHROOT_ACTIVE_MOUNTS=("$2" "${CHROOT_ACTIVE_MOUNTS[@]}")
 }
 
 chroot_maybe_add_mount() {
@@ -59,25 +80,8 @@ mount_setup() {
 # 	chroot_add_mount shm "$1/run/shm" -t tmpfs -o mode=1777,nosuid,nodev 
 }
 
-# Mount other directory for linux-parts.sh
-chroot_setup_others() {
-	while read -r; do
-		if [ "$REPLY" != "$NEW_ROOT" ]; then
-			nomFichierAvecEspace="$REPLY"
-			[[ $REPLY =~ .*\ .* ]] && nomFichierAvecEspace="${REPLY// /\\sp_ce}"
-			to_mount[$nomFichierAvecEspace]="$TMP_ROOT/install.arch$( echo "${REPLY// /\\ }" | sed "s/${NEW_ROOT//\//\\\/}//" )"
-		fi
-	done < <(findmnt -Recvruno TARGET "$NEW_ROOT")
-	for elem in ${!to_mount[*]} ; do
-# 		echo "Key \"${elem//\\sp_ce/\\ }\" : Value : "${to_mount[${elem}]} >&2; # retourne les clés du hachage et la valeur de leur élément
-		[ ! -e "${to_mount[${elem}]//\\ / }" ] && mkdir "${to_mount[${elem}]//\\ / }"
-		chroot_add_mount "${elem//\\sp_ce/ }" "${to_mount[${elem}]//\\ / }"  -t none -o bind || return 1
-	done
-	return 0
-}
-
 chroot_teardown() {
-  [ "$CHROOT_ACTIVE_MOUNTS" != "" ] && $exe umount "${CHROOT_ACTIVE_MOUNTS[@]}"
+  [ "$CHROOT_ACTIVE_MOUNTS" != "" ] && umount "${CHROOT_ACTIVE_MOUNTS[@]}"
   unset CHROOT_ACTIVE_MOUNTS
   [ "$1" == "reset" ] && CHROOT_ACTIVE_MOUNTS=() 
 }
@@ -110,15 +114,6 @@ chroot_new_root () {
 	arch_chroot "$RACINE" "/bin/bash"
 }
 
-set_lang_chroot () {
-	$exe sed -i "s/\#$LA_LOCALE/$LA_LOCALE/g" $1/etc/locale.gen
-	$exe ">" $1/etc/vconsole.conf echo "KEYMAP=\"$CONSOLEKEYMAP\"" 
-	$exe ">" $1/etc/locale.conf echo "LANG=\"$LA_LOCALE\"" 
-	[[ -z $2 ]]  && arch_chroot "$1" "locale-gen" || locale_gen "$1"
-# 	On force le TIMEZONE
-	arch_chroot "$1" "ln -fs /usr/share/zoneinfo/$TIMEZONE /etc/localtime"
-}
-
 #ADAPTED FROM AIS
 # chroot into new root
 arch_chroot () {
@@ -130,14 +125,16 @@ arch_chroot () {
 	return $?
 }
 
-lix_chroot () {
-	local root=$1; shift
-	chroot $root /bin/bash <<EOF
-		${@}
-EOF
-	[[ ! -z $FILE_COMMANDS ]] && echo "${@}" >> $FILE_COMMANDS
-}
+#
+# Other function to execute more complexs commands in chroot using "EOF"
+#
+#lix_chroot () {
+#	local root=$1; shift
+#	chroot $root /bin/bash <<EOF
+#		${@}
+#EOF
+#	[[ ! -z $FILE_COMMANDS ]] && echo "${@}" >> $FILE_COMMANDS
+#}
 
-exe="" && [[ ! -z $FILE_COMMANDS ]] && exe="exe"
 declare -A to_mount
 # END
