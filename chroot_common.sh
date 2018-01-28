@@ -121,7 +121,7 @@ arch_chroot () {
 # 	$exe chroot $ROOT_CHROOT ${1}
 	local ROOT_CHROOT="$1"
 	[[ ! -e $ROOT_CHROOT ]] && [[ ! -z "$RACINE" ]] && ROOT_CHROOT="$RACINE" || shift
-	$exe chroot $ROOT_CHROOT ${@}
+	chroot $ROOT_CHROOT ${@}
 	return $?
 }
 
